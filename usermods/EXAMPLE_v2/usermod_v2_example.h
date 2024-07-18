@@ -292,6 +292,7 @@ class MyExampleUsermod : public Usermod {
       oappend(SET_F("dd=addDropdown('")); oappend(String(FPSTR(_name)).c_str()); oappend(SET_F("','testInt');"));
       oappend(SET_F("addOption(dd,'Nothing',0);"));
       oappend(SET_F("addOption(dd,'Everything',42);"));
+      oappend(SET_F("addOption(dd,'None',41);"));
     }
 
 
