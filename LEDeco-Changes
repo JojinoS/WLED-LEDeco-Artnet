@@ -2,3 +2,9 @@ Changes + Way it works (DMXoverPOWER feature)
 1. in wled00/usermods_list.cpp added records and path to custom USERMOD file.
 2. Custom Usermod file created in usermods/DMXoverPOWER/usermodDMXoverPOWER.h 
 3. DMXoverPOWER UI usermod configuration added in that file.
+
+
+
+
+Routine and Documentation :
+https://docs.google.com/document/d/11tpgHCHRoebFEGDBpn0fd4VUrLP84gdiUBBNwdb6Q_4/edit
