@@ -184,3 +184,8 @@ class DMXoverPOWER : public Usermod {
     }
 };
 
+// add more strings here to reduce flash memory usage
+const char DMXoverPOWER::_name[]    PROGMEM = "DMX Over Power Lines";
+const char DMXoverPOWER::_enabled[] PROGMEM = "enabled";
+const char DMXoverPOWER::_yamar_startup_dmx_value[] PROGMEM = "Yamar startup DMX value";
+const char DMXoverPOWER::_yamar_startup_delay[] PROGMEM = "Yamar startup delay";
