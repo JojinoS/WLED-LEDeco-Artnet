@@ -10,8 +10,6 @@ class DMXoverPOWER : public Usermod {
 
     // Private class members. You can declare variables and functions only accessible to your usermod here
     bool enabled = false;
-    unsigned long lastTime;
-    bool initDone;
 
     int Yamar_Startup_DMXvalue = 20;
     unsigned long Yamar_Startup_Delay = 10000;
@@ -27,39 +25,7 @@ class DMXoverPOWER : public Usermod {
     static const char _yamar_startup_delay[];
 
 
-    // any private methods should go here (non-inline method should be defined out of class)
-    void publishMqtt(const char* state, bool retain = false); // example for publishing MQTT message
-
-
   public:
-
-    // non WLED related methods, may be used for data exchange between usermods (non-inline methods should be defined out of class)
-
-    /**
-     * Enable/Disable the usermod
-     */
-    inline void enable(bool enable) { enabled = enable; }
-
-    /**
-     * Get usermod enabled/disabled state
-     */
-    inline bool isEnabled() { return enabled; }
-
-    // in such case add the following to another usermod:
-    //  in private vars:
-    //   #ifdef USERMOD_EXAMPLE
-    //   DMXoverPOWER* UM;
-    //   #endif
-    //  in setup()
-    //   #ifdef USERMOD_EXAMPLE
-    //   UM = (DMXoverPOWER*) usermods.lookup(USERMOD_ID_EXAMPLE);
-    //   #endif
-    //  somewhere in loop() or other member method
-    //   #ifdef USERMOD_EXAMPLE
-    //   if (UM != nullptr) isExampleEnabled = UM->isEnabled();
-    //   if (!isExampleEnabled) UM->enable(true);
-    //   #endif
-
 
     // methods called by WLED (can be inlined as they are called only once but if you call them explicitly define them out of class)
 
@@ -98,54 +64,7 @@ class DMXoverPOWER : public Usermod {
       // NOTE: on very long strips strip.isUpdating() may always return true so update accordingly
       if (!enabled || strip.isUpdating()) return;
 
-      // do your magic here
-      if (millis() - lastTime > 1000) {
-        //Serial.println("I'm alive!");
-        lastTime = millis();
-      }
     }
-
-
-    /*
-     * addToJsonInfo() can be used to add custom entries to the /json/info part of the JSON API.
-     * Creating an "u" object allows you to add custom key/value pairs to the Info section of the WLED web UI.
-     */
-    void addToJsonInfo(JsonObject& root)
-    {
-      // if "u" object does not exist yet wee need to create it
-      JsonObject user = root["u"];
-      if (user.isNull()) user = root.createNestedObject("u");
-    }
-
-
-    /*
-     * addToJsonState() can be used to add custom entries to the /json/state part of the JSON API (state object).
-     * Values in the state object may be modified by connected clients
-     */
-    void addToJsonState(JsonObject& root)
-    {
-      if (!initDone || !enabled) return;  // prevent crash on boot applyPreset()
-
-      JsonObject usermod = root[FPSTR(_name)];
-      if (usermod.isNull()) usermod = root.createNestedObject(FPSTR(_name));
-    }
-
-
-    /*
-     * readFromJsonState() can be used to receive data clients send to the /json/state part of the JSON API (state object).
-     * Values in the state object may be modified by connected clients
-     */
-    void readFromJsonState(JsonObject& root)
-    {
-      if (!initDone) return;  // prevent crash on boot applyPreset()
-
-      JsonObject usermod = root[FPSTR(_name)];
-      if (!usermod.isNull()) {
-        // expect JSON usermod data in usermod name object: {"ExampleUsermod:{"user0":10}"}
-        userVar0 = usermod["user0"] | userVar0; //if "user0" key exists in JSON, update, else keep old value
-      }
-    }
-
 
     /*
      * addToConfig() can be used to add custom persistent settings to the cfg.json file in the "um" (usermod) object.
@@ -186,10 +105,6 @@ class DMXoverPOWER : public Usermod {
     {
       JsonObject top = root.createNestedObject(FPSTR(_name));
       top[FPSTR(_enabled)] = enabled;
-      /*top[FPSTR(_yamar_startup_dmx_value)] = Yamar_Startup_DMXvalue;
-      top[FPSTR(_yamar_startup_delay)] = Yamar_Startup_Delay;
-      */
-
       top["Yamar Startup DMXvalue"] = Yamar_Startup_DMXvalue;
       top["Yamar Startup delay"] = Yamar_Startup_Delay;
       top["Yamar TX mode"] = Yamar_TXmode;
@@ -221,13 +136,7 @@ class DMXoverPOWER : public Usermod {
 
       bool configComplete = !top.isNull();
 
-
       enabled = top[FPSTR(_enabled)] | enabled;
-      /*Yamar_Startup_DMXvalue = top[FPSTR(_yamar_startup_dmx_value)] | Yamar_Startup_DMXvalue;
-      Yamar_Startup_DMXvalue = (uint8_t) min(255,max(0,(int)Yamar_Startup_DMXvalue)); // bounds checking
-      Yamar_Startup_Delay = top[FPSTR(_yamar_startup_delay)] | Yamar_Startup_Delay;
-      Yamar_Startup_Delay = (uint16_t) min(25000,max(5000,(int)Yamar_Startup_Delay)); // bounds checking
-      */
       configComplete &= getJsonValue(top["Yamar Startup DMXvalue"], Yamar_Startup_DMXvalue);
       configComplete &= getJsonValue(top["Yamar Startup delay"], Yamar_Startup_Delay);
       configComplete &= getJsonValue(top["Yamar TX mode"], Yamar_TXmode, 1);
@@ -237,8 +146,6 @@ class DMXoverPOWER : public Usermod {
 
       return configComplete;
     }
-
-
     /*
      * appendConfigData() is called when user enters usermod settings page
      * it may add additional metadata for certain entry fields (adding drop down is possible)
@@ -275,117 +182,10 @@ class DMXoverPOWER : public Usermod {
       oappend(SET_F("addOption(fs,'19 Mhz',15);"));
       oappend(SET_F("addOption(fs,'20 Mhz',17);"));
     }
-
-
-    /*
-     * handleOverlayDraw() is called just before every show() (LED strip update frame) after effects have set the colors.
-     * Use this to blank out some LEDs or set them to a different color regardless of the set effect mode.
-     * Commonly used for custom clocks (Cronixie, 7 segment)
-     */
-    void handleOverlayDraw()
-    {
-      //strip.setPixelColor(0, RGBW32(0,0,0,0)) // set the first pixel to black
-    }
-
-
-    /**
-     * handleButton() can be used to override default button behaviour. Returning true
-     * will prevent button working in a default way.
-     * Replicating button.cpp
-     */
-    bool handleButton(uint8_t b) {
-      yield();
-      // ignore certain button types as they may have other consequences
-      if (!enabled
-       || buttonType[b] == BTN_TYPE_NONE
-       || buttonType[b] == BTN_TYPE_RESERVED
-       || buttonType[b] == BTN_TYPE_PIR_SENSOR
-       || buttonType[b] == BTN_TYPE_ANALOG
-       || buttonType[b] == BTN_TYPE_ANALOG_INVERTED) {
-        return false;
-      }
-
-      bool handled = false;
-      // do your button handling here
-      return handled;
-    }
-  
-
-#ifndef WLED_DISABLE_MQTT
-    /**
-     * handling of MQTT message
-     * topic only contains stripped topic (part after /wled/MAC)
-     */
-    bool onMqttMessage(char* topic, char* payload) {
-      // check if we received a command
-      //if (strlen(topic) == 8 && strncmp_P(topic, PSTR("/command"), 8) == 0) {
-      //  String action = payload;
-      //  if (action == "on") {
-      //    enabled = true;
-      //    return true;
-      //  } else if (action == "off") {
-      //    enabled = false;
-      //    return true;
-      //  } else if (action == "toggle") {
-      //    enabled = !enabled;
-      //    return true;
-      //  }
-      //}
-      return false;
-    }
-
-    /**
-     * onMqttConnect() is called when MQTT connection is established
-     */
-    void onMqttConnect(bool sessionPresent) {
-      // do any MQTT related initialisation here
-      //publishMqtt("I am alive!");
-    }
-#endif
-
-
-    /**
-     * onStateChanged() is used to detect WLED state change
-     * @mode parameter is CALL_MODE_... parameter used for notifications
-     */
-    void onStateChange(uint8_t mode) {
-      // do something if WLED state changed (color, brightness, effect, preset, etc)
-    }
-
-
-    /*
-     * getId() allows you to optionally give your V2 usermod an unique ID (please define it in const.h!).
-     * This could be used in the future for the system to determine whether your usermod is installed.
-     */
-    uint16_t getId()
-    {
-      return USERMOD_ID_EXAMPLE;
-    }
-
-   //More methods can be added in the future, this example will then be extended.
-   //Your usermod will remain compatible as it does not need to implement all methods from the Usermod base class!
 };
-
 
 // add more strings here to reduce flash memory usage
 const char DMXoverPOWER::_name[]    PROGMEM = "DMX Over Power Lines";
 const char DMXoverPOWER::_enabled[] PROGMEM = "enabled";
 const char DMXoverPOWER::_yamar_startup_dmx_value[] PROGMEM = "Yamar startup DMX value";
 const char DMXoverPOWER::_yamar_startup_delay[] PROGMEM = "Yamar startup delay";
-
-
-
-// implementation of non-inline member methods
-
-void DMXoverPOWER::publishMqtt(const char* state, bool retain)
-{
-#ifndef WLED_DISABLE_MQTT
-  //Check if MQTT Connected, otherwise it will crash the 8266
-  if (WLED_MQTT_CONNECTED) {
-    char subuf[64];
-    strcpy(subuf, mqttDeviceTopic);
-    strcat_P(subuf, PSTR("/example"));
-    mqtt->publish(subuf, 0, retain, state);
-  }
-#endif
-}
